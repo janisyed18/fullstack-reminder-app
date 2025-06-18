@@ -12,7 +12,5 @@ yarn-error.log*
 # Java / Maven
 Reminder-App/target/
 Reminder-App/.mvn/
-Reminder-App/mvnw
-Reminder-App/mvnw.cmd
 *.iml
 .idea
