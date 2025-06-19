@@ -3,14 +3,13 @@ import {
   AppBar,
   Toolbar,
   Typography,
-  Box,
   IconButton,
   useTheme,
 } from "@mui/material";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
 import Brightness7Icon from "@mui/icons-material/Brightness7";
-import { ColorModeContext } from "../../App"; // Import the context
+import { ColorModeContext } from "../../App";
 
 const Header = () => {
   const theme = useTheme();
