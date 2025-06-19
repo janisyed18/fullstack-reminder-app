@@ -6,6 +6,7 @@ import com.reminderApp.Reminder.App.dto.ReminderDto;
 import com.reminderApp.Reminder.App.service.ReminderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -15,7 +16,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "${cors.allowedOrigins}")
 @RestController
 @RequestMapping("/api/v1/reminders") // Base path for the resource
 @RequiredArgsConstructor
