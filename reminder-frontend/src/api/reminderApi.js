@@ -9,7 +9,7 @@ const api = axios.create({
   baseURL: API_BASE_URL,
 });
 
-// Function to get all reminders with pagination
+// Updated to handle all filtering parameters dynamically
 export const getAllReminders = (params) => {
   const {
     page = 0,
@@ -17,26 +17,31 @@ export const getAllReminders = (params) => {
     sort = "dueDate,asc",
     title = "",
     priority = "",
+    isCompleted,
   } = params;
-  return api.get(
-    `/all?page=${page}&size=${size}&sort=${sort}&title=${title}&priority=${priority}`
-  );
+
+  // Start with base parameters
+  let url = `/all?page=${page}&size=${size}&sort=${sort}&title=${title}&priority=${priority}`;
+
+  // Only add the isCompleted parameter if it's not null or undefined (i.e., it's explicitly true or false)
+  if (isCompleted !== null && isCompleted !== undefined) {
+    url += `&isCompleted=${isCompleted}`;
+  }
+
+  return api.get(url);
 };
 
-// Function to get a single reminder by its ID
+// --- Other API functions remain the same ---
+
 export const getReminderById = (id) => api.get(`/get/${id}`);
 
-// Function to create a new reminder
 export const createReminder = (reminder) => api.post("/create", reminder);
 
-// Function to update an existing reminder
 export const updateReminder = (id, reminder) =>
   api.put(`/update/${id}`, reminder);
 
-// Function to delete a reminder
 export const deleteReminder = (id) => api.delete(`/delete/${id}`);
 
-// Function to mark a reminder as completed
 export const markAsCompleted = (id) => api.patch(`/complete/${id}`);
 
 export default api;

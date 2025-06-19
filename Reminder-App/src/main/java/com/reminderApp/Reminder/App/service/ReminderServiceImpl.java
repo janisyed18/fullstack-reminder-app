@@ -5,11 +5,13 @@ import com.reminderApp.Reminder.App.dto.ReminderDto;
 import com.reminderApp.Reminder.App.entity.Reminder;
 import com.reminderApp.Reminder.App.exception.ResourceNotFoundException;
 import com.reminderApp.Reminder.App.repository.ReminderRepository;
+import com.reminderApp.Reminder.App.specifications.ReminderSpecification;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,7 +23,7 @@ public class ReminderServiceImpl implements ReminderService {
     private final ReminderRepository reminderRepository;
     private final ModelMapper modelMapper;
 
-    @Override
+/*    @Override
     @Transactional(readOnly = true)
     public Page<ReminderDto> getAllReminders(String title, String priority, Pageable pageable) {
         Page<Reminder> reminders;
@@ -39,6 +41,18 @@ public class ReminderServiceImpl implements ReminderService {
             // This 'else' block will now correctly execute when no priority is selected
             reminders = reminderRepository.findAll(pageable);
         }
+
+        return reminders.map(reminder -> modelMapper.map(reminder, ReminderDto.class));
+    }*/
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ReminderDto> getAllReminders(String title, String priority, Boolean isCompleted, Pageable pageable) {
+        // Build the specification from the filters
+        Specification<Reminder> spec = ReminderSpecification.getReminders(title, priority, isCompleted);
+
+        // Use the specification to find the reminders
+        Page<Reminder> reminders = reminderRepository.findAll(spec, pageable);
 
         return reminders.map(reminder -> modelMapper.map(reminder, ReminderDto.class));
     }

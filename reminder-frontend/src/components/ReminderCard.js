@@ -7,15 +7,21 @@ import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import { format, formatDistanceToNow, isPast } from "date-fns";
 import { motion } from "framer-motion";
 
-const priorityColors = {
-  HIGH: "error",
-  MEDIUM: "warning",
-  LOW: "info",
+// Import icons for priority
+import PriorityHighIcon from "@mui/icons-material/PriorityHigh"; // For HIGH
+import WarningAmberIcon from "@mui/icons-material/WarningAmber"; // For MEDIUM
+import LowPriorityIcon from "@mui/icons-material/LowPriority"; // For LOW
+
+const priorityConfig = {
+  HIGH: { label: "High", Icon: PriorityHighIcon, color: "error" },
+  MEDIUM: { label: "Medium", Icon: WarningAmberIcon, color: "warning" },
+  LOW: { label: "Low", Icon: LowPriorityIcon, color: "info" },
 };
 
 const ReminderCard = ({ reminder, onMarkComplete, onEdit, onDelete }) => {
   const dueDate = new Date(reminder.dueDate);
   const isOverdue = isPast(dueDate) && !reminder.completed;
+  const priority = priorityConfig[reminder.priority] || priorityConfig.MEDIUM;
 
   const getRelativeTime = () => {
     if (reminder.completed)
@@ -36,14 +42,13 @@ const ReminderCard = ({ reminder, onMarkComplete, onEdit, onDelete }) => {
           p: 2,
           mb: 2,
           borderRadius: "16px",
-          borderLeft: `5px solid`,
-          borderColor: priorityColors[reminder.priority] + ".main",
-          backgroundColor: "rgba(255, 255, 255, 0.7)",
-          backdropFilter: "blur(10px)",
-          opacity: reminder.completed ? 0.7 : 1,
-          transition: "opacity 0.3s",
           position: "relative",
           overflow: "hidden",
+          backgroundColor: "rgba(255, 255, 255, 0.7)",
+          backdropFilter: "blur(10px)",
+          opacity: reminder.completed ? 0.6 : 1,
+          borderTop: `4px solid`,
+          borderColor: `${priority.color}.main`,
         }}
       >
         <Box
@@ -59,27 +64,31 @@ const ReminderCard = ({ reminder, onMarkComplete, onEdit, onDelete }) => {
               alignItems: "flex-start",
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <IconButton
                 onClick={onMarkComplete}
-                sx={{ mr: 1 }}
+                sx={{ p: 0.5 }}
                 disabled={reminder.completed}
               >
                 {reminder.completed ? (
-                  <CheckCircleIcon color="success" />
+                  <CheckCircleIcon color="success" sx={{ fontSize: "2rem" }} />
                 ) : (
-                  <RadioButtonUncheckedIcon />
+                  <RadioButtonUncheckedIcon sx={{ fontSize: "2rem" }} />
                 )}
               </IconButton>
               <Box>
                 <Typography
                   variant="h6"
                   component="div"
-                  sx={{ fontWeight: "500" }}
+                  sx={{ fontWeight: "500", lineHeight: 1.2 }}
                 >
                   {reminder.title}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mt: 0.5 }}
+                >
                   {reminder.description}
                 </Typography>
               </Box>
@@ -96,11 +105,19 @@ const ReminderCard = ({ reminder, onMarkComplete, onEdit, onDelete }) => {
           <Box
             sx={{
               display: "flex",
-              justifyContent: "flex-end",
+              justifyContent: "space-between",
               alignItems: "center",
               mt: 2,
             }}
           >
+            {/* NEW PRIORITY VISUALIZATION */}
+            <Chip
+              icon={<priority.Icon />}
+              label={priority.label}
+              color={priority.color}
+              size="small"
+              variant="outlined"
+            />
             <Chip
               label={getRelativeTime()}
               color={isOverdue ? "error" : "default"}

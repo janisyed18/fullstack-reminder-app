@@ -33,13 +33,13 @@ public class ReminderController {
         return ResponseEntity.ok(reminderService.getAllReminders(pageable));
     }*/
 
-    // Change the getAllReminders method to this:
     @GetMapping("/all")
     public ResponseEntity<Page<ReminderDto>> getAllReminders(
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String priority,
+            @RequestParam(required = false) Boolean isCompleted,
             Pageable pageable) {
-        return ResponseEntity.ok(reminderService.getAllReminders(title, priority, pageable));
+        return ResponseEntity.ok(reminderService.getAllReminders(title, priority, isCompleted, pageable));
     }
 
     /**
