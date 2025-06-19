@@ -1,12 +1,12 @@
 package com.reminderApp.Reminder.App.service;
 
-
 import com.reminderApp.Reminder.App.dto.CreateReminderDto;
 import com.reminderApp.Reminder.App.dto.ReminderDto;
 import com.reminderApp.Reminder.App.entity.Reminder;
 import com.reminderApp.Reminder.App.exception.ResourceNotFoundException;
 import com.reminderApp.Reminder.App.repository.ReminderRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,8 +23,23 @@ public class ReminderServiceImpl implements ReminderService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ReminderDto> getAllReminders(Pageable pageable) {
-        Page<Reminder> reminders = reminderRepository.findAll(pageable);
+    public Page<ReminderDto> getAllReminders(String title, String priority, Pageable pageable) {
+        Page<Reminder> reminders;
+        boolean hasTitle = title != null && !title.trim().isEmpty();
+        priority = StringUtils.trimToNull(priority);
+        boolean hasPriority = StringUtils.isNotBlank(priority) && !StringUtils.equalsIgnoreCase(priority, "null");
+
+        if (hasTitle && hasPriority) {
+            reminders = reminderRepository.findByTitleContainingIgnoreCaseAndPriority(title, priority, pageable);
+        } else if (hasTitle) {
+            reminders = reminderRepository.findByTitleContainingIgnoreCase(title, pageable);
+        } else if (hasPriority) {
+            reminders = reminderRepository.findByPriority(priority, pageable);
+        } else {
+            // This 'else' block will now correctly execute when no priority is selected
+            reminders = reminderRepository.findAll(pageable);
+        }
+
         return reminders.map(reminder -> modelMapper.map(reminder, ReminderDto.class));
     }
 
@@ -51,7 +66,7 @@ public class ReminderServiceImpl implements ReminderService {
         existingReminder.setTitle(createReminderDto.getTitle());
         existingReminder.setDescription(createReminderDto.getDescription());
         existingReminder.setDueDate(createReminderDto.getDueDate());
-        existingReminder.setPriority(createReminderDto.getPriority());
+        existingReminder.setPriority(createReminderDto.getPriority()); // Ensure priority is updated
 
         Reminder updatedReminder = reminderRepository.save(existingReminder);
         return modelMapper.map(updatedReminder, ReminderDto.class);

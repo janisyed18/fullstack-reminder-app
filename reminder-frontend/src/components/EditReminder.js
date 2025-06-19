@@ -7,9 +7,10 @@ import {
   DialogTitle,
   TextField,
   Box,
-  MenuItem,
+  Typography,
 } from "@mui/material";
 import { format } from "date-fns";
+import PrioritySelector from "./PrioritySelector"; // Import the new component
 
 const EditReminder = ({ open, handleClose, handleSave, reminder }) => {
   const [title, setTitle] = useState("");
@@ -98,19 +99,17 @@ const EditReminder = ({ open, handleClose, handleSave, reminder }) => {
               shrink: true,
             }}
           />
-          <TextField
-            margin="dense"
-            id="priority"
-            select
-            label="Priority"
-            fullWidth
-            value={priority}
-            onChange={(e) => setPriority(e.target.value)}
+
+          {/* This is the new priority selector */}
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ mt: 2, display: "block" }}
           >
-            <MenuItem value="LOW">Low</MenuItem>
-            <MenuItem value="MEDIUM">Medium</MenuItem>
-            <MenuItem value="HIGH">High</MenuItem>
-          </TextField>
+            Priority
+          </Typography>
+          <PrioritySelector selectedValue={priority} onChange={setPriority} />
+
           {error && <p style={{ color: "red" }}>{error}</p>}
         </Box>
       </DialogContent>

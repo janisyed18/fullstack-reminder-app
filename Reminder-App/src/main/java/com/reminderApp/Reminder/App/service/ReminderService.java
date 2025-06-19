@@ -8,7 +8,8 @@ import org.springframework.data.domain.Pageable;
 
 public interface ReminderService {
 
-    Page<ReminderDto> getAllReminders(Pageable pageable);
+
+    Page<ReminderDto> getAllReminders(String title, String priority, Pageable pageable);
 
     ReminderDto getReminderById(Long id);
 

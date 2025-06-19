@@ -7,14 +7,15 @@ import {
   DialogTitle,
   TextField,
   Box,
-  MenuItem,
+  Typography,
 } from "@mui/material";
+import PrioritySelector from "./PrioritySelector"; // Import the new component
 
 const AddReminder = ({ open, handleClose, handleSave }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
-  const [priority, setPriority] = useState("MEDIUM");
+  const [priority, setPriority] = useState("MEDIUM"); // Default priority
   const [error, setError] = useState("");
 
   const onSave = () => {
@@ -23,7 +24,6 @@ const AddReminder = ({ open, handleClose, handleSave }) => {
       return;
     }
 
-    // Format dueDate to include seconds for LocalDateTime
     const formattedDueDate = `${dueDate}:00`;
 
     handleSave({ title, description, dueDate: formattedDueDate, priority });
@@ -85,19 +85,17 @@ const AddReminder = ({ open, handleClose, handleSave }) => {
               shrink: true,
             }}
           />
-          <TextField
-            margin="dense"
-            id="priority"
-            select
-            label="Priority"
-            fullWidth
-            value={priority}
-            onChange={(e) => setPriority(e.target.value)}
+
+          {/* This is the new priority selector */}
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ mt: 2, display: "block" }}
           >
-            <MenuItem value="LOW">Low</MenuItem>
-            <MenuItem value="MEDIUM">Medium</MenuItem>
-            <MenuItem value="HIGH">High</MenuItem>
-          </TextField>
+            Priority
+          </Typography>
+          <PrioritySelector selectedValue={priority} onChange={setPriority} />
+
           {error && <p style={{ color: "red" }}>{error}</p>}
         </Box>
       </DialogContent>

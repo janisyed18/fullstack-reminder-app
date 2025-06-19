@@ -10,8 +10,18 @@ const api = axios.create({
 });
 
 // Function to get all reminders with pagination
-export const getAllReminders = (page = 0, size = 10, sort = "dueDate,asc") =>
-  api.get(`/all?page=${page}&size=${size}&sort=${sort}`);
+export const getAllReminders = (params) => {
+  const {
+    page = 0,
+    size = 6,
+    sort = "dueDate,asc",
+    title = "",
+    priority = "",
+  } = params;
+  return api.get(
+    `/all?page=${page}&size=${size}&sort=${sort}&title=${title}&priority=${priority}`
+  );
+};
 
 // Function to get a single reminder by its ID
 export const getReminderById = (id) => api.get(`/get/${id}`);

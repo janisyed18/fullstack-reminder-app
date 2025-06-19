@@ -27,9 +27,18 @@ public class ReminderController {
      * Retrieves a paginated list of all reminders.
      * Path: /api/v1/reminders/all
      */
-    @GetMapping("/all")
+    /*@GetMapping("/all")
     public ResponseEntity<Page<ReminderDto>> getAllReminders(Pageable pageable) {
         return ResponseEntity.ok(reminderService.getAllReminders(pageable));
+    }*/
+
+    // Change the getAllReminders method to this:
+    @GetMapping("/all")
+    public ResponseEntity<Page<ReminderDto>> getAllReminders(
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String priority,
+            Pageable pageable) {
+        return ResponseEntity.ok(reminderService.getAllReminders(title, priority, pageable));
     }
 
     /**
