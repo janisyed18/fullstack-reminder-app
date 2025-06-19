@@ -9,13 +9,14 @@ import {
   Box,
   Typography,
 } from "@mui/material";
-import { format } from "date-fns";
-import PrioritySelector from "./PrioritySelector"; // Import the new component
+import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import { format, isPast } from "date-fns"; // Import isPast
+import PrioritySelector from "./PrioritySelector";
 
 const EditReminder = ({ open, handleClose, handleSave, reminder }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [dueDate, setDueDate] = useState("");
+  const [dueDate, setDueDate] = useState(null);
   const [priority, setPriority] = useState("MEDIUM");
   const [error, setError] = useState("");
 
@@ -24,21 +25,25 @@ const EditReminder = ({ open, handleClose, handleSave, reminder }) => {
       setTitle(reminder.title);
       setDescription(reminder.description || "");
       setPriority(reminder.priority || "MEDIUM");
-      const formattedDate = format(
-        new Date(reminder.dueDate),
-        "yyyy-MM-dd'T'HH:mm"
-      );
-      setDueDate(formattedDate);
+      setDueDate(new Date(reminder.dueDate));
     }
   }, [reminder]);
 
   const onSave = () => {
-    if (!title || !dueDate) {
-      setError("Title and Due Date are required.");
+    // --- NEW VALIDATION CHECK ---
+    if (isPast(dueDate)) {
+      setError(
+        "Due date cannot be in the past. Please select a future date and time."
+      );
       return;
     }
+    if (!title.trim()) {
+      setError("Title is required.");
+      return;
+    }
+    // --- END OF NEW VALIDATION CHECK ---
 
-    const formattedDueDate = `${dueDate}:00`;
+    const formattedDueDate = format(dueDate, "yyyy-MM-dd'T'HH:mm:ss");
 
     handleSave(reminder.id, {
       title,
@@ -64,18 +69,21 @@ const EditReminder = ({ open, handleClose, handleSave, reminder }) => {
             margin="dense"
             id="title"
             label="Title"
+            placeholder="e.g., Team Meeting slides"
             type="text"
             fullWidth
             variant="outlined"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
-            error={!!error && !title}
+            error={!!error && !title.trim()}
+            helperText={!!error && !title.trim() ? "Title is required." : ""}
           />
           <TextField
             margin="dense"
             id="description"
             label="Description"
+            placeholder="Add more details here..."
             type="text"
             fullWidth
             multiline
@@ -84,23 +92,17 @@ const EditReminder = ({ open, handleClose, handleSave, reminder }) => {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
-          <TextField
-            margin="dense"
-            id="dueDate"
-            label="Due Date"
-            type="datetime-local"
-            fullWidth
-            variant="outlined"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-            required
-            error={!!error && !dueDate}
-            InputLabelProps={{
-              shrink: true,
-            }}
-          />
 
-          {/* This is the new priority selector */}
+          <Box mt={2}>
+            <DateTimePicker
+              label="Due Date & Time"
+              value={dueDate}
+              onChange={(newValue) => setDueDate(newValue)}
+              disablePast
+              sx={{ width: "100%" }}
+            />
+          </Box>
+
           <Typography
             variant="caption"
             color="text.secondary"
@@ -110,7 +112,11 @@ const EditReminder = ({ open, handleClose, handleSave, reminder }) => {
           </Typography>
           <PrioritySelector selectedValue={priority} onChange={setPriority} />
 
-          {error && <p style={{ color: "red" }}>{error}</p>}
+          {error && (
+            <Typography color="error" variant="body2" sx={{ mt: 2 }}>
+              {error}
+            </Typography>
+          )}
         </Box>
       </DialogContent>
       <DialogActions sx={{ p: "16px 24px" }}>

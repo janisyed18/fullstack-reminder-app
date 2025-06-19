@@ -4,25 +4,29 @@ import SignalCellularAltIcon from "@mui/icons-material/SignalCellularAlt";
 import SignalCellularAlt2BarIcon from "@mui/icons-material/SignalCellularAlt2Bar";
 import SignalCellularAlt1BarIcon from "@mui/icons-material/SignalCellularAlt1Bar";
 
+// New, more vibrant color theme for priorities
 const priorityOptions = [
   {
     value: "HIGH",
     label: "High",
     Icon: SignalCellularAltIcon,
-    color: "error.main",
-  },
+    color: "#f44336",
+    hoverColor: "#ffcdd2",
+  }, // Red
   {
     value: "MEDIUM",
     label: "Medium",
     Icon: SignalCellularAlt2BarIcon,
-    color: "warning.main",
-  },
+    color: "#ff9800",
+    hoverColor: "#ffecb3",
+  }, // Orange
   {
     value: "LOW",
     label: "Low",
     Icon: SignalCellularAlt1BarIcon,
-    color: "info.main",
-  },
+    color: "#4caf50",
+    hoverColor: "#c8e6c9",
+  }, // Green
 ];
 
 const PrioritySelector = ({ selectedValue, onChange }) => {
@@ -32,7 +36,7 @@ const PrioritySelector = ({ selectedValue, onChange }) => {
     <Box
       sx={{ display: "flex", justifyContent: "space-between", gap: 1, mt: 2 }}
     >
-      {priorityOptions.map(({ value, label, Icon, color }) => (
+      {priorityOptions.map(({ value, label, Icon, color, hoverColor }) => (
         <Paper
           key={value}
           elevation={selectedValue === value ? 8 : 2}
@@ -44,11 +48,13 @@ const PrioritySelector = ({ selectedValue, onChange }) => {
             cursor: "pointer",
             border: "2px solid",
             borderColor: selectedValue === value ? color : "transparent",
+            backgroundColor: selectedValue === value ? hoverColor : "inherit",
             transform: selectedValue === value ? "scale(1.05)" : "scale(1)",
             transition: "all 0.2s ease-in-out",
             "&:hover": {
               transform: "scale(1.05)",
               borderColor: color,
+              backgroundColor: hoverColor,
             },
           }}
         >

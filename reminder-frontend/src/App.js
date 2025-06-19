@@ -10,11 +10,14 @@ import Header from "./components/layout/Header";
 import ReminderList from "./components/ReminderList";
 import "./App.css";
 
-// Create a context to pass the theme toggle function down
+// Import the necessary date picker provider and adapter
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+
 export const ColorModeContext = createContext({ toggleColorMode: () => {} });
 
 function App() {
-  const [mode, setMode] = useState("light"); // 'light' or 'dark'
+  const [mode, setMode] = useState("light");
 
   const colorMode = useMemo(
     () => ({
@@ -29,7 +32,7 @@ function App() {
     () =>
       createTheme({
         palette: {
-          mode, // Use the state variable here
+          mode,
           primary: { main: "#FE6B8B" },
           secondary: { main: "#FF8E53" },
           ...(mode === "dark" && {
@@ -57,17 +60,19 @@ function App() {
   );
 
   return (
-    <ColorModeContext.Provider value={colorMode}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Header />
-        <Container maxWidth="lg" component="main">
-          <Box mt={4} mb={4}>
-            <ReminderList />
-          </Box>
-        </Container>
-      </ThemeProvider>
-    </ColorModeContext.Provider>
+    <LocalizationProvider dateAdapter={AdapterDateFns}>
+      <ColorModeContext.Provider value={colorMode}>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <Header />
+          <Container maxWidth="lg" component="main">
+            <Box mt={4} mb={4}>
+              <ReminderList />
+            </Box>
+          </Container>
+        </ThemeProvider>
+      </ColorModeContext.Provider>
+    </LocalizationProvider>
   );
 }
 
