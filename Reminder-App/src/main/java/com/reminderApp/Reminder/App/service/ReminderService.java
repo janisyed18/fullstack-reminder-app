@@ -9,7 +9,8 @@ import org.springframework.data.domain.Pageable;
 public interface ReminderService {
 
 
-    Page<ReminderDto> getAllReminders(String title, String priority, Pageable pageable);
+    // Add the new isCompleted parameter
+    Page<ReminderDto> getAllReminders(String title, String priority, Boolean isCompleted, Pageable pageable);
 
     ReminderDto getReminderById(Long id);
 

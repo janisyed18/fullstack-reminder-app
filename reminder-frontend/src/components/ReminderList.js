@@ -5,7 +5,6 @@ import {
   Button,
   Grid,
   Skeleton,
-  Chip,
   Dialog,
   Pagination,
   DialogActions,
@@ -19,49 +18,22 @@ import {
   InputAdornment,
   ToggleButtonGroup,
   ToggleButton,
+  Tabs,
+  Tab,
 } from "@mui/material";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import SearchIcon from "@mui/icons-material/Search";
 import { motion, AnimatePresence } from "framer-motion";
-import { isToday, isFuture, isPast } from "date-fns";
 
 import * as reminderApi from "../api/reminderApi";
 import AddReminder from "./AddReminder";
 import EditReminder from "./EditReminder";
 import ReminderCard from "./ReminderCard";
 
-const groupReminders = (reminders) => {
-  const groups = {
-    today: [],
-    upcoming: [],
-    completed: [],
-  };
-
-  reminders.forEach((r) => {
-    const dueDate = new Date(r.dueDate);
-    if (r.completed) {
-      groups.completed.push(r);
-    } else if (isToday(dueDate) || isPast(dueDate)) {
-      groups.today.push(r);
-    } else if (isFuture(dueDate)) {
-      groups.upcoming.push(r);
-    }
-  });
-
-  for (const key in groups) {
-    if (key === "completed") {
-      groups[key].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-    } else {
-      groups[key].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
-    }
-  }
-  return groups;
-};
-
 const SkeletonLoader = () => (
-  <Grid container spacing={2}>
+  <Grid container spacing={2} mt={2}>
     {[...Array(6)].map((_, index) => (
-      <Grid item xs={12} sm={6} md={4} key={index}>
+      <Grid item xs={12} sm={6} lg={4} key={index}>
         <Skeleton
           variant="rectangular"
           height={130}
@@ -81,6 +53,8 @@ const ReminderList = () => {
   const [priorityFilter, setPriorityFilter] = useState(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
+  const [activeTab, setActiveTab] = useState("active"); // 'active' or 'completed'
+
   const [isAddModalOpen, setAddModalOpen] = useState(false);
   const [isEditModalOpen, setEditModalOpen] = useState(false);
   const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -92,13 +66,14 @@ const ReminderList = () => {
   });
 
   const fetchReminders = useCallback(async () => {
+    setLoading(true);
     try {
-      // Do not setLoading(true) here to avoid flashing on filter change
       const params = {
         page: page - 1,
         size: 6,
         title: searchTerm,
         priority: priorityFilter,
+        isCompleted: activeTab === "completed",
       };
       const response = await reminderApi.getAllReminders(params);
       setReminders(response.data.content || []);
@@ -106,113 +81,81 @@ const ReminderList = () => {
       setError(null);
     } catch (err) {
       setError(
-        "Failed to fetch reminders. Please ensure the backend is running."
+        "Failed to fetch reminders. Please ensure the backend is running and refresh the page."
       );
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [page, searchTerm, priorityFilter]);
+  }, [page, searchTerm, priorityFilter, activeTab]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
       fetchReminders();
-    }, 500);
+    }, 500); // Debounce search to prevent excessive API calls
     return () => clearTimeout(handler);
   }, [fetchReminders]);
 
-  // --- CRUD & MODAL HANDLERS ---
-  const handleCreate = async (newReminder) => {
+  // --- GENERIC ACTION HANDLER ---
+  const handleAction = async (action, successMessage, severity = "success") => {
     try {
-      await reminderApi.createReminder(newReminder);
-      setNotification({
-        open: true,
-        message: "Reminder created successfully!",
-        severity: "success",
-      });
+      await action();
+      setNotification({ open: true, message: successMessage, severity });
+      // Always refetch data after any action to get the correct paginated list from the server
       fetchReminders();
     } catch (err) {
       setNotification({
         open: true,
-        message: "Failed to create reminder.",
+        message: "An error occurred. Please try again.",
         severity: "error",
       });
     }
   };
 
-  const handleUpdate = async (id, updatedReminder) => {
-    try {
-      await reminderApi.updateReminder(id, updatedReminder);
-      setNotification({
-        open: true,
-        message: "Reminder updated successfully!",
-        severity: "success",
-      });
-      fetchReminders();
-    } catch (err) {
-      setNotification({
-        open: true,
-        message: "Failed to update reminder.",
-        severity: "error",
-      });
-    }
+  const handleCreate = (newReminder) => {
+    handleAction(
+      () => reminderApi.createReminder(newReminder),
+      "Reminder created successfully!"
+    );
+    setAddModalOpen(false);
   };
-
+  const handleUpdate = (id, updatedReminder) => {
+    handleAction(
+      () => reminderApi.updateReminder(id, updatedReminder),
+      "Reminder updated successfully!"
+    );
+    setEditModalOpen(false);
+  };
+  const handleMarkAsCompleted = (id) => {
+    handleAction(
+      () => reminderApi.markAsCompleted(id),
+      "Reminder marked as complete!",
+      "info"
+    );
+  };
   const handleDelete = async () => {
     if (!currentReminder) return;
-    try {
-      await reminderApi.deleteReminder(currentReminder.id);
-      setNotification({
-        open: true,
-        message: "Reminder deleted.",
-        severity: "warning",
-      });
-      fetchReminders();
-    } catch (err) {
-      setNotification({
-        open: true,
-        message: "Failed to delete reminder.",
-        severity: "error",
-      });
-    } finally {
-      handleDeleteConfirmClose();
-    }
+    await handleAction(
+      () => reminderApi.deleteReminder(currentReminder.id),
+      "Reminder deleted!",
+      "warning"
+    );
+    handleDeleteConfirmClose();
   };
 
-  const handleMarkAsCompleted = async (id) => {
-    try {
-      const response = await reminderApi.markAsCompleted(id);
-      // Optimistically update the UI before a full refetch for a smoother feel
-      setReminders(reminders.map((r) => (r.id === id ? response.data : r)));
-      setNotification({
-        open: true,
-        message: "Reminder marked as complete!",
-        severity: "info",
-      });
-    } catch (err) {
-      setNotification({
-        open: true,
-        message: "Failed to update status.",
-        severity: "error",
-      });
-    }
-  };
-
+  // --- UI EVENT HANDLERS ---
   const handleEditModalOpen = (reminder) => {
     setCurrentReminder(reminder);
     setEditModalOpen(true);
   };
-
   const handleDeleteConfirmOpen = (reminder) => {
     setCurrentReminder(reminder);
     setDeleteConfirmOpen(true);
   };
-
   const handleDeleteConfirmClose = () => {
-    setDeleteConfirmOpen(false);
     setCurrentReminder(null);
+    setDeleteConfirmOpen(false);
   };
-
   const handleNotificationClose = (event, reason) => {
     if (reason === "clickaway") return;
     setNotification({ ...notification, open: false });
@@ -221,22 +164,15 @@ const ReminderList = () => {
   const handlePageChange = (event, value) => {
     setPage(value);
   };
-
   const handlePriorityFilterChange = (event, newPriority) => {
     setPage(1);
     setPriorityFilter(newPriority);
   };
-
-  const groupedReminders = groupReminders(reminders);
-  const totalReminders = reminders.length;
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.07 } },
+  const handleTabChange = (event, newValue) => {
+    setPage(1);
+    setActiveTab(newValue);
   };
 
-  if (loading) return <SkeletonLoader />;
-
-  // This block now uses the 'error' state, fixing the deployment error.
   if (error) {
     return (
       <Alert severity="error" sx={{ mt: 4 }}>
@@ -277,8 +213,6 @@ const ReminderList = () => {
           gap: 2,
           flexWrap: "wrap",
           alignItems: "center",
-          backgroundColor: "rgba(255, 255, 255, 0.7)",
-          backdropFilter: "blur(10px)",
         }}
       >
         <TextField
@@ -315,81 +249,73 @@ const ReminderList = () => {
         </ToggleButtonGroup>
       </Paper>
 
-      <AnimatePresence>
-        {totalReminders === 0 ? (
+      <Paper sx={{ width: "100%", mb: 2 }}>
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          textColor="primary"
+          indicatorColor="primary"
+          variant="fullWidth"
+        >
+          <Tab value="active" label="Active Reminders" />
+          <Tab value="completed" label="Completed" />
+        </Tabs>
+      </Paper>
+
+      {loading ? (
+        <SkeletonLoader />
+      ) : (
+        <AnimatePresence mode="wait">
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
+            key={activeTab}
+            initial={{ y: 10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -10, opacity: 0 }}
+            transition={{ duration: 0.2 }}
           >
-            <Paper
-              sx={{
-                textAlign: "center",
-                p: 5,
-                backgroundColor: "rgba(255, 255, 255, 0.7)",
-                backdropFilter: "blur(10px)",
-              }}
-            >
-              <Typography variant="h5" gutterBottom>
-                No Reminders Found
-              </Typography>
-              <Typography color="text.secondary">
-                Try adjusting your search or filter settings, or create a new
-                reminder!
-              </Typography>
-            </Paper>
-          </motion.div>
-        ) : (
-          Object.keys(groupedReminders).map(
-            (groupKey) =>
-              groupedReminders[groupKey].length > 0 && (
-                <Box
-                  key={groupKey}
-                  component={motion.div}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  sx={{ mb: 4 }}
-                >
-                  <Chip
-                    label={groupKey.toUpperCase()}
-                    color="primary"
-                    sx={{ mb: 2, fontWeight: "bold" }}
-                  />
-                  <Grid
-                    container
-                    spacing={2}
-                    component={motion.div}
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                  >
-                    {groupedReminders[groupKey].map((reminder) => (
-                      <Grid item xs={12} sm={6} lg={4} key={reminder.id}>
-                        <ReminderCard
-                          reminder={reminder}
-                          onMarkComplete={() =>
-                            handleMarkAsCompleted(reminder.id)
-                          }
-                          onEdit={() => handleEditModalOpen(reminder)}
-                          onDelete={() => handleDeleteConfirmOpen(reminder)}
-                        />
-                      </Grid>
-                    ))}
+            {reminders.length === 0 ? (
+              <Paper sx={{ textAlign: "center", p: 5, mt: 2 }}>
+                <Typography variant="h6" color="text.secondary">
+                  No reminders found for the current filters.
+                </Typography>
+              </Paper>
+            ) : (
+              <Grid container spacing={2}>
+                {reminders.map((reminder) => (
+                  <Grid item xs={12} sm={6} lg={4} key={reminder.id}>
+                    <ReminderCard
+                      reminder={reminder}
+                      onMarkComplete={() => handleMarkAsCompleted(reminder.id)}
+                      onEdit={() => handleEditModalOpen(reminder)}
+                      onDelete={() => handleDeleteConfirmOpen(reminder)}
+                    />
                   </Grid>
-                </Box>
-              )
-          )
-        )}
-      </AnimatePresence>
-      {totalPages > 1 && (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+                ))}
+              </Grid>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      )}
+
+      {totalPages > 1 && !loading && (
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            mt: 4,
+            gap: 2,
+          }}
+        >
           <Pagination
             count={totalPages}
             page={page}
             onChange={handlePageChange}
             color="primary"
           />
+          <Typography variant="body2" color="text.secondary">
+            Page {page} of {totalPages}
+          </Typography>
         </Box>
       )}
 

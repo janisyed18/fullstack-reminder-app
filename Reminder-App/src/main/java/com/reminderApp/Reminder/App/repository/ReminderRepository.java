@@ -5,10 +5,11 @@ import com.reminderApp.Reminder.App.entity.Reminder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface ReminderRepository extends JpaRepository<Reminder, Long> {
+public interface ReminderRepository extends JpaRepository<Reminder, Long>, JpaSpecificationExecutor<Reminder> {
     // This new method will handle searching by title and filtering by priority
     Page<Reminder> findByTitleContainingIgnoreCaseAndPriority(String title, String priority, Pageable pageable);
 
