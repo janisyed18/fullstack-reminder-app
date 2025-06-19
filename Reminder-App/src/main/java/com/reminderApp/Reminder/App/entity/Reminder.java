@@ -9,7 +9,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "reminder")
+@Table(name = "reminder", schema = "reminderapp")
 @Data
 @NoArgsConstructor
 public class Reminder {
